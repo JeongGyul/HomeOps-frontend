@@ -175,6 +175,14 @@ export default function NotificationsPage() {
   const { data: services = [] } = useQuery({ queryKey: ['services'], queryFn: getServices });
 
   const updateSettingsMut = useMutation({ mutationFn: updateSettings, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] }) });
+  const patchSettings = (patch: Partial<typeof settings>) =>
+    updateSettingsMut.mutate({
+      notifyCrash: settings?.notifyCrash ?? true,
+      notifyRecover: settings?.notifyRecover ?? true,
+      failThreshold: settings?.failThreshold ?? 2,
+      defaultInterval: settings?.defaultInterval ?? 30,
+      ...patch,
+    });
   const deleteMut = useMutation({ mutationFn: (id: number) => deleteWebhook(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['webhooks'] }); setDelTarget(null); } });
 
   const svcMap = useMemo(() => Object.fromEntries(services.map((s) => [s.id, s.name])) as Record<number, string>, [services]);
@@ -216,10 +224,10 @@ export default function NotificationsPage() {
             </div>
             <div style={{ marginTop: 4 }}>
               <SettingRow title="서비스 다운 시 알림" desc="ServiceCrashedEvent 발행 시 전송">
-                <Switch checked={settings?.notifyCrash ?? true} onChange={(v) => updateSettingsMut.mutate({ notifyCrash: v })} />
+                <Switch checked={settings?.notifyCrash ?? true} onChange={(v) => patchSettings({ notifyCrash: v })} />
               </SettingRow>
               <SettingRow title="서비스 복구 시 알림" desc="다운된 서비스가 다시 정상화될 때">
-                <Switch checked={settings?.notifyRecover ?? true} onChange={(v) => updateSettingsMut.mutate({ notifyRecover: v })} />
+                <Switch checked={settings?.notifyRecover ?? true} onChange={(v) => patchSettings({ notifyRecover: v })} />
               </SettingRow>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0 4px' }}>
                 <div style={{ flex: 1 }}>
@@ -229,7 +237,7 @@ export default function NotificationsPage() {
                 <div style={{ width: 130 }}>
                   <Select
                     value={String(settings?.failThreshold ?? 2)}
-                    onChange={(v) => updateSettingsMut.mutate({ failThreshold: parseInt(v, 10) })}
+                    onChange={(v) => patchSettings({ failThreshold: parseInt(v, 10) })}
                     options={[{ value: '1', label: '1회' }, { value: '2', label: '2회' }, { value: '3', label: '3회' }, { value: '5', label: '5회' }]}
                   />
                 </div>

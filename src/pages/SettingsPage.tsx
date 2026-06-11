@@ -81,6 +81,14 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const { data: sysInfo } = useQuery({ queryKey: ['systemInfo'], queryFn: getSystemInfo, staleTime: 60_000 });
 
   const updateMut = useMutation({ mutationFn: updateSettings, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] }) });
+  const patchSettings = (patch: Partial<typeof settings>) =>
+    updateMut.mutate({
+      notifyCrash: settings?.notifyCrash ?? true,
+      notifyRecover: settings?.notifyRecover ?? true,
+      failThreshold: settings?.failThreshold ?? 2,
+      defaultInterval: settings?.defaultInterval ?? 30,
+      ...patch,
+    });
 
   return (
     <>
@@ -130,7 +138,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                 <div style={{ width: 140 }}>
                   <Select
                     value={String(settings?.defaultInterval ?? 30)}
-                    onChange={(v) => updateMut.mutate({ defaultInterval: parseInt(v, 10) })}
+                    onChange={(v) => patchSettings({ defaultInterval: parseInt(v, 10) })}
                     options={[{ value: '15', label: '15초마다' }, { value: '30', label: '30초마다' }, { value: '60', label: '1분마다' }]}
                   />
                 </div>
